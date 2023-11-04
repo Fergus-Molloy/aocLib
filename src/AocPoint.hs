@@ -1,13 +1,28 @@
-module AocPoint (Point, PointMap (..), getPoint, getRow, getCol, getCardinalIndicies, getOrdinalIndicies, getCardinalPoints, getOrdinalPoints) where
+module AocPoint
+  ( Point,
+    PointMap (..),
+    getPoint,
+    getRow,
+    getCol,
+    getCardinalIndicies,
+    getOrdinalIndicies,
+    getCardinalPoints,
+    getOrdinalPoints,
+    setPoint,
+  )
+where
 
 type Point = (Int, Int)
 
 -- | A flat map of 2d points
 data PointMap = PointMap {size :: (Int, Int), points :: [Point]} deriving (Show)
 
+getIdx :: (Int, Int) -> Point -> Int
+getIdx (w, _) (x, y) = w * y + x
+
 -- | get a point from a point map will crash if index is out of bounds
 getPoint :: PointMap -> Point -> Point
-getPoint (PointMap (w, _) ps) (x, y) = ps !! (w * y + x)
+getPoint (PointMap dim ps) i = ps !! getIdx dim i
 
 -- | get a row of points from a point map will return empty on out of bounds
 getRow :: PointMap -> Int -> [Point]
@@ -36,9 +51,16 @@ indexInRange :: PointMap -> Point -> Bool
 indexInRange pm (x, y) = x >= 0 && x < fst (size pm) && y >= 0 && y < snd (size pm)
 
 -- | get the points N,E,S,W of the given index
-getCardinalPoints :: PointMap -> Point -> [Point]
-getCardinalPoints pm p = map (getPoint pm) $ filter (indexInRange pm) $ getCardinalIndicies p
+getCardinalPoints :: PointMap -> Point -> PointMap
+getCardinalPoints pm p = PointMap (size pm) $ map (getPoint pm) $ filter (indexInRange pm) $ getCardinalIndicies p
 
 -- | get all the points around the given index
-getOrdinalPoints :: PointMap -> Point -> [Point]
-getOrdinalPoints pm p = map (getPoint pm) $ filter (indexInRange pm) $ getOrdinalIndicies p
+getOrdinalPoints :: PointMap -> Point -> PointMap
+getOrdinalPoints pm p = PointMap (size pm) $ map (getPoint pm) $ filter (indexInRange pm) $ getOrdinalIndicies p
+
+setPoint :: PointMap -> Point -> Point -> PointMap
+setPoint (PointMap dim []) _ _ = PointMap dim []
+setPoint (PointMap dim ps) i sub = PointMap dim $ h ++ sub : drop 1 xs
+  where
+    (h, xs) = splitAt idx ps
+    idx = getIdx dim i
